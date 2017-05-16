@@ -1,11 +1,12 @@
 import json
+import logging
 import os
 import sys
 
 from twisted.internet import reactor
 from twisted.internet.serialport import SerialPort
 from twisted.protocols.basic import LineReceiver
-from twisted.python import log
+from twisted.python import twistedLog
 
 from autobahn.twisted.websocket import WebSocketServerFactory, WebSocketServerProtocol
 
@@ -13,10 +14,8 @@ import drivebase
 import hardware
 
 
-try:
-    PORT = int(sys.argv[1])
-except (IndexError, ValueError):
-    PORT = 8081
+log = logging.getLogger(__name__)
+
 
 class RobotControlProtocol(WebSocketServerProtocol):
 
@@ -71,17 +70,32 @@ class TurretProtocol(LineReceiver):
 
 class RobotControlFactory(WebSocketServerFactory):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, turret=None, **kwargs):
         super(RobotControlFactory, self).__init__(*args, **kwargs)
         self.drivebase = drivebase.DriveBase(hardware.left_drive, hardware.right_drive)
         self.lock = None
+        self.turret = turret
 
 
 if __name__ == "__main__":
-    log.startLogging(sys.stdout)
+    try:
+        serial_name = sys.argv[1]
+        log.info('Serial opens on %s', serial_name)
+    except (IndexError):
+        serial_name = None
+        log.info('No serial port supplied, turret will not function')
 
-    #turret = SerialPort(TurretProtocol(), 'p', 'dev/')
-    control = RobotControlFactory(u'ws://127.0.0.1:{}'.format(PORT))
+    try:
+        ws_port = int(sys.argv[2])
+    except (IndexError, ValueError):
+        ws_port = 8081
+    log.info('Websocket opens on port %s', ws_port)
+
+    log.info('Starting server')
+
+    twistedLog.startLogging(sys.stdout)
+    turret = None if serial_name is None else SerialPort(TurretProtocol(), 'p', 'dev/')
+    control = RobotControlFactory(u'ws://127.0.0.1:{}'.format(ws_port), turret=turret)
     control.protocol = RobotControlProtocol
-    reactor.listenTCP(PORT, control)
+    reactor.listenTCP(ws_port, control)
     reactor.run()
