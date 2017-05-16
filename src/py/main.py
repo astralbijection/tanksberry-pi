@@ -2,11 +2,12 @@ import json
 import os
 import sys
 
-from twisted.python import log
 from twisted.internet import reactor
+from twisted.internet.serialport import SerialPort
+from twisted.protocols.basic import LineReceiver
+from twisted.python import log
 
 from autobahn.twisted.websocket import WebSocketServerFactory, WebSocketServerProtocol
-from autobahn.twisted.resource import WebSocketResource
 
 import drivebase
 import hardware
@@ -62,6 +63,12 @@ class RobotControlProtocol(WebSocketServerProtocol):
         self.factory.lock = None if self.factory.lock is self else self.factory.lock
 
 
+class TurretProtocol(LineReceiver):
+
+    def dataReceived(self, data):
+        pass
+        
+
 class RobotControlFactory(WebSocketServerFactory):
 
     def __init__(self, *args, **kwargs):
@@ -73,7 +80,8 @@ class RobotControlFactory(WebSocketServerFactory):
 if __name__ == "__main__":
     log.startLogging(sys.stdout)
 
-    factory = RobotControlFactory(u'ws://127.0.0.1:{}'.format(PORT))
-    factory.protocol = RobotControlProtocol
-    reactor.listenTCP(PORT, factory)
+    #turret = SerialPort(TurretProtocol(), 'p', 'dev/')
+    control = RobotControlFactory(u'ws://127.0.0.1:{}'.format(PORT))
+    control.protocol = RobotControlProtocol
+    reactor.listenTCP(PORT, control)
     reactor.run()
