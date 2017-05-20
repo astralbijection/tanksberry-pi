@@ -1,5 +1,5 @@
 import motor
 import servo
 
-left_drive = motor.HBridgeMotor(4, 5, 6)
-right_drive = motor.HBridgeMotor(7, 8, 9)
+left_drive = motor.HBridgeMotor(5, 17, 27)
+right_drive = motor.HBridgeMotor(6, 22, 23)
