@@ -26,14 +26,14 @@ class RobotControlProtocol(WebSocketServerProtocol):
     def onConnect(self, request):
         if self.factory.lock is None:
             self.factory.lock = self
-            print('Client connected')
+            log.info('client connected')
         else:
             self.sendClose()
-            print('Client rejected')
+            log.warning('client rejected due to existing client')
 
     def onMessage(self, payload, isBinary):
         payload = json.loads(payload.decode('utf-8'))
-        print('Received message {}'.format(payload))
+        log.debug('received message {}'.format(payload))
 
         try:
             drive_control = payload['drive']
@@ -59,12 +59,16 @@ class RobotControlProtocol(WebSocketServerProtocol):
                 else:
                     left, right = power/2, power
             drivebase.set_power(left, right) 
-            print('Motor output {} {}'.format(left, right))
+            log.debug('motor output: l=%s r=%s', left, right)
         except KeyError as e:
-            print('Malformed data, key {} does not exist'.format(e))
+            log.warning('malformed data, key {} does not exist'.format(e))
 
     def onClose(self, wasClean, code, reason):
-        self.factory.lock = None if self.factory.lock is self else self.factory.lock
+        if self.factory.lock is self:
+            log.info('client disconnected, removing lock')
+            self.factory.lock = None
+        else:
+            log.info('rejected client disconnected')
 
 
 class TurretProtocol(LineReceiver):

@@ -50,4 +50,3 @@ class HBridgeMotor(DCMotor):
         a, b = direction.h_bridge
         self.a.set(a)
         self.b.set(b)
-        print('a={} b={}'.format(a, b))
