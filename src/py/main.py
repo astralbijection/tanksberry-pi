@@ -1,14 +1,18 @@
+import atexit
 import json
 import logging
+import logging.config
 import os
 import sys
 
 from twisted.internet import reactor
 from twisted.internet.serialport import SerialPort
 from twisted.protocols.basic import LineReceiver
-from twisted.python import twistedLog
+from twisted.python import log as twistedLog
 
 from autobahn.twisted.websocket import WebSocketServerFactory, WebSocketServerProtocol
+
+from RPi import GPIO as gpio
 
 import drivebase
 import hardware
@@ -55,6 +59,7 @@ class RobotControlProtocol(WebSocketServerProtocol):
                 else:
                     left, right = power/2, power
             drivebase.set_power(left, right) 
+            print('Motor output {} {}'.format(left, right))
         except KeyError as e:
             print('Malformed data, key {} does not exist'.format(e))
 
@@ -75,21 +80,29 @@ class RobotControlFactory(WebSocketServerFactory):
         self.drivebase = drivebase.DriveBase(hardware.left_drive, hardware.right_drive)
         self.lock = None
         self.turret = turret
+        self.drivebase.init()
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.DEBUG)
+    log.setLevel(logging.DEBUG)
+    log.info('Starting server')
+    log.info('Args supplied: %s', sys.argv)
     try:
-        serial_name = sys.argv[1]
+        serial_name = sys.argv[2]
         log.info('Serial opens on %s', serial_name)
     except (IndexError):
         serial_name = None
         log.info('No serial port supplied, turret will not function')
 
     try:
-        ws_port = int(sys.argv[2])
+        ws_port = int(sys.argv[1])
     except (IndexError, ValueError):
         ws_port = 8081
     log.info('Websocket opens on port %s', ws_port)
+
+    log.info('Initializing Raspberry Pi GPIO')
+    gpio.setmode(gpio.BCM)
 
     log.info('Starting server')
 
@@ -99,3 +112,4 @@ if __name__ == "__main__":
     control.protocol = RobotControlProtocol
     reactor.listenTCP(ws_port, control)
     reactor.run()
+    atexit.register(gpio.cleanup)

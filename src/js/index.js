@@ -37,7 +37,7 @@ server.listen(8080, () => {
 });
 
 console.log('starting subserver');
-var subserver = child_process.spawn('python', [path.normalize(ROOT_DIR + '/src/py/main.py'), SUBSERVER_PORT]);
+var subserver = child_process.spawn('python3.6', [path.normalize(ROOT_DIR + '/src/py/main.py'), SUBSERVER_PORT]);
 
 subserver.stdout.on('data', function(data) {
 	console.log('subserver: ' + data);
