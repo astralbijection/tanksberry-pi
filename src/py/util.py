@@ -10,3 +10,6 @@ class Turning(Enum):
 
 def lin_map(x, a1, a2, b1, b2):
     return (b2 - a2) * (x - a1) / (b1 - a1) + a2;
+
+def intbyte(n, signed=False, size=2):
+    return list(bytearray((n).to_bytes(size, 'big', signed=signed)))

@@ -1,3 +1,4 @@
 autobahn>=17.5.0
 pyserial>=3.3
 twisted>=17.1.0
+smbus-cffi>=0.5.1

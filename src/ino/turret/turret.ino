@@ -19,8 +19,8 @@ const int GUN_ST = 4;
 const int GIM_SPR = 2048;
 const int GIM_MIN_DELAY = 2000;
 const int GIM_MAX_DELAY = 10000;
-const int GIM_UPPER = 8192;  // upper limit
-const int GIM_LOWER = -8192; // lower limit
+const int GIM_UPPER = 4096;  // upper limit
+const int GIM_LOWER = -2048; // lower limit
 const int GIM_EN = 9;
 const int GIM_DR = 8;
 const int GIM_ST = 7;
@@ -111,7 +111,7 @@ void onRcv(int bytes) {
     
     case 'm': {  // Move gimbal (2bi: angle, 2bi: speed)
 
-      // Note that our angles are on a scale from 0 to 2^15
+      // Note that our angles are on a scale from 0 to 2^15 (360 degrees)
       long angle = readInt();
       unsigned int speed = readInt();
 
