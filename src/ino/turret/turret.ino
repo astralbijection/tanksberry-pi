@@ -5,25 +5,25 @@
 //#define DEBUG_BYTES
 
 // Constants
-#define I2C_ADDR 0x32
-#define ST_PULSE_WIDTH 100
+const int I2C_ADDR = 0x32;
+const int ST_PULSE_WIDTH = 100;
 
 // Gun
-#define GUN_SPR 200  // steps per revolution
-#define GUN_MIN_DELAY 3000  // lowest delay between pulses, in us
-#define GUN_EN 6
-#define GUN_DR 5
-#define GUN_ST 4
+const int GUN_SPR = 200;  // steps per revolution
+const int GUN_MIN_DELAY = 3000;  // lowest delay between pulses, in us
+const int GUN_EN = 6;
+const int GUN_DR = 5;
+const int GUN_ST = 4;
 
 // Gimbal
-#define GIM_SPR 2048
-#define GIM_MIN_DELAY 2000
-#define GIM_MAX_DELAY 10000
-#define GIM_UPPER 8192  // upper limit
-#define GIM_LOWER -8192 // lower limit
-#define GIM_EN 9
-#define GIM_DR 8
-#define GIM_ST 7
+const int GIM_SPR = 2048;
+const int GIM_MIN_DELAY = 2000;
+const int GIM_MAX_DELAY = 10000;
+const int GIM_UPPER = 8192;  // upper limit
+const int GIM_LOWER = -8192; // lower limit
+const int GIM_EN = 9;
+const int GIM_DR = 8;
+const int GIM_ST = 7;
 
 unsigned long ct;
 
@@ -62,6 +62,7 @@ void setup() {
 }
 
 void loop() {
+  /*
   ct = micros();
   if (gunNext < gimNext && gunEnabled) {  // If gun is sooner
     if (gunReturning) {  // If returning to neutral, put in reverse
@@ -85,6 +86,17 @@ void loop() {
     delayMicroseconds(max(gimNext - ct, 0));
     pulseOut(GIM_ST, ST_PULSE_WIDTH);
     gimNext += gimDelay;
+  }*/
+  if (gimEnabled && gimTarget != gimStep) {  // If gimbal is sooner and has not reached target
+    if (gimTarget > gimStep) {
+      digitalWrite(GIM_DR, HIGH);
+      gimStep++;
+    } else {
+      digitalWrite(GIM_DR, LOW);
+      gimStep--;
+    }
+    delayMicroseconds(gimDelay);
+    pulseOut(GIM_ST, ST_PULSE_WIDTH);
   }
 }
 
