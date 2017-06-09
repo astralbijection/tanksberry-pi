@@ -15,7 +15,7 @@ from autobahn.twisted.websocket import WebSocketServerFactory, WebSocketServerPr
 from RPi import GPIO as gpio
 
 import drivebase
-import hardware
+import devices
 
 
 log = logging.getLogger(__name__)
@@ -81,7 +81,7 @@ class RobotControlFactory(WebSocketServerFactory):
 
     def __init__(self, *args, turret=None, **kwargs):
         super(RobotControlFactory, self).__init__(*args, **kwargs)
-        self.drivebase = drivebase.DriveBase(hardware.left_drive, hardware.right_drive)
+        self.drivebase = drivebase.DriveBase(devices.left_drive, devices.right_drive)
         self.lock = None
         self.turret = turret
         self.drivebase.init()

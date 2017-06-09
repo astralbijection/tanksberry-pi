@@ -1,5 +1,4 @@
 import asyncio
-import util
 
 
 class DriveBase:
