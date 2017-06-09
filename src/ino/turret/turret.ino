@@ -2,6 +2,7 @@
 
 // Debugging
 #define DEBUG_I2C
+#define DEBUG_LOOP
 //#define DEBUG_BYTES
 
 // Constants
@@ -95,6 +96,13 @@ void loop() {
       digitalWrite(GIM_DR, LOW);
       gimStep--;
     }
+    #ifdef DEBUG_LOOP
+    Serial.print(gimEnabled);
+    Serial.print(", ");
+    Serial.print(gimTarget);
+    Serial.print(", ");
+    Serial.println(gimStep);
+    #endif
     delayMicroseconds(gimDelay);
     pulseOut(GIM_ST, ST_PULSE_WIDTH);
   }
@@ -224,6 +232,7 @@ void setEnabled(char mot, bool state) {
     case 'g':  // Gimbal
       if (state && !gimEnabled) {  // Rising edge?
         gimStep = 0;  // Reset the steps
+        gimTarget = 0;  // Reset the target
       }
       gimEnabled = state;
       digitalWrite(GIM_EN, !state);  // EN is active low
