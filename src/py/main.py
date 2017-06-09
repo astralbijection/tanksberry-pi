@@ -49,15 +49,16 @@ class RobotControlProtocol(WebSocketServerProtocol):
                 left, right = 0, 0
                 if turn == 'none':
                     left, right = power, power
-                if power == 0:
-                    if turn == 'left':
-                        left, right = -power, power
-                    elif turn == 'right':
-                        left, right = power, -power
-                if (turn == 'left') ^ (power > 0):
-                    left, right = power, power/2
                 else:
-                    left, right = power/2, power
+                    if power == 0:
+                        if turn == 'left':
+                            left, right = -1, 1
+                        elif turn == 'right':
+                            left, right = 1, -1
+                    elif (turn == 'left') ^ (power > 0):
+                        left, right = power, power/5
+                    else:
+                        left, right = power/5, power
             drivebase.set_power(left, right) 
             log.debug('motor output: l=%s r=%s', left, right)
         except KeyError as e:

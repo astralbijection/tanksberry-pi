@@ -1,3 +1,4 @@
+import logging
 import os
 import sys
 
@@ -6,6 +7,7 @@ import util
 
 
 BLASTER_PATH = '/dev/pi-blaster'
+log = logging.getLogger(__name__)
 
 class _BlasterImpl():
 
@@ -13,7 +15,9 @@ class _BlasterImpl():
         self.path = path
     
     def _echo(self, msg):
-        os.system('echo "{msg}" > {path}'.format(msg=msg, path=self.path))
+        cmd = 'echo "{msg}" > {path}'.format(msg=msg, path=self.path)
+        os.system(cmd)
+        log.debug('running command: %s', cmd)
 
     def set(self, pin, level):
         self._echo('{pin}={level}'.format(pin=pin, level=level))
@@ -25,7 +29,6 @@ class _DummyBlaster(_BlasterImpl):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        import logging
         self.logger = logging.getLogger('DummyBlaster')
 
     def _echo(self, msg):
