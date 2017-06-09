@@ -52,5 +52,5 @@ subserver.on('close', (code) => {
 });
 
 process.on('exit', (code) => {
-	subserver.kill('SIGINT');
+	subserver.kill();
 });

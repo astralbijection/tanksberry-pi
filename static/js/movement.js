@@ -85,7 +85,8 @@ $(function() {
 	socket.onopen = function() {
 		console.log('connected');
 		setInterval(function() {
-			socket.send(JSON.stringify({mode: getDriveMode(), turret: turret}));
+			drive.mode = getDriveMode();
+			socket.send(JSON.stringify({drive: drive, turret: turret}));
 		}, 50);
 	}
 });
