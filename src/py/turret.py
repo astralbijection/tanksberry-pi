@@ -18,8 +18,8 @@ class Turret:
         :param angle: angle to move to, in degrees
         :param speed: rate to move at, in degrees/second
         """
-        out_a = util.intbyte(util.lin_map(angle, 0, 360, 0, 32768), True)
-        out_s = util.intbyte(util.lin_map(speed, 0, 360, 0, 32768))
+        out_a = util.intbyte(int(util.lin_map(angle, 0, 360, 0, 32768)), True)
+        out_s = util.intbyte(int(util.lin_map(speed, 0, 360, 0, 32768)))
         bus.write_i2c_block_data(self.i2c_addr, ord('m'), out_a + out_s)
 
     def stop_xgim(self):
@@ -30,7 +30,7 @@ class Turret:
         :param times: bullets to fire
         :param delay: delay between shots, in seconds
         """
-        out_d = util.intbyte(delay*10000000)
+        out_d = util.intbyte(int(delay*10000000))
         bus.write_i2c_block_data(self.i2c_addr, ord('t'), [times] + out_d)
 
     def stop_firing(self):
