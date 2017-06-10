@@ -14,7 +14,6 @@ from autobahn.twisted.websocket import WebSocketServerFactory, WebSocketServerPr
 
 from RPi import GPIO as gpio
 
-import drivebase
 import devices
 
 
@@ -36,13 +35,16 @@ class RobotControlProtocol(WebSocketServerProtocol):
         log.debug('received message {}'.format(payload))
 
         try:
+
+            # Drive control
             drive_control = payload['drive']
             drive_mode = drive_control['mode']
-            drivebase = self.factory.drivebase
             left, right = 0, 0
+
             if drive_mode == 'tank':
                 left = float(drive_control['left'])
                 right = float(drive_control['right'])
+
             elif drive_mode == 'wasd':
                 power = float(drive_control['power'])
                 turn = drive_control['turn']
@@ -59,8 +61,15 @@ class RobotControlProtocol(WebSocketServerProtocol):
                         left, right = power, power/5
                     else:
                         left, right = power/5, power
-            drivebase.set_power(left, right) 
+
+            devices.drivebase.set_power(left, right) 
             log.debug('motor output: l=%s r=%s', left, right)
+
+            # Turret control
+            turret_control = payload['turret']
+            pitch = turret_control['pitch']
+            yaw = turret_control['yaw']
+
         except KeyError as e:
             log.warning('malformed data, key {} does not exist'.format(e))
 
@@ -70,35 +79,23 @@ class RobotControlProtocol(WebSocketServerProtocol):
             self.factory.lock = None
         else:
             log.info('rejected client disconnected')
-
-
-class TurretProtocol(LineReceiver):
-
-    def dataReceived(self, data):
-        pass
         
 
 class RobotControlFactory(WebSocketServerFactory):
 
-    def __init__(self, *args, turret=None, **kwargs):
+    def __init__(self, *args, **kwargs):
         super(RobotControlFactory, self).__init__(*args, **kwargs)
-        self.drivebase = drivebase.DriveBase(devices.left_drive, devices.right_drive)
         self.lock = None
-        self.turret = turret
-        self.drivebase.init()
+        self.yaw_target = 0
+        devices.drivebase.init()
+        devices.turret.init()
+        devices.turret.track_target(lambda: self.yaw_target, 360)
 
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
     log.setLevel(logging.DEBUG)
     log.info('Starting server')
-    log.info('Args supplied: %s', sys.argv)
-    try:
-        serial_name = sys.argv[2]
-        log.info('Serial opens on %s', serial_name)
-    except (IndexError):
-        serial_name = None
-        log.info('No serial port supplied, turret will not function')
 
     try:
         ws_port = int(sys.argv[1])

@@ -8,7 +8,8 @@ var drive = {
 	turn: 'none'
 };
 var turret = {
-
+	pitch: 0,
+	yaw: 0
 };
 
 function getDriveMode() {
@@ -81,6 +82,8 @@ var socket;
 
 
 $(function() {
+
+	// Initialize socket
 	socket = new WebSocket('ws://' + window.location.hostname + ':8081');
 	socket.onopen = function() {
 		console.log('connected');
@@ -89,4 +92,12 @@ $(function() {
 			socket.send(JSON.stringify({drive: drive, turret: turret}));
 		}, 50);
 	}
-});
+
+	// Initialize inputs
+	$('#pitch').mousemove(function() {
+		turret.pitch = $(this).val();
+	});
+	$('#yaw').mousemove(function() {
+		turret.yaw = $(this).val();
+	})
+});;
