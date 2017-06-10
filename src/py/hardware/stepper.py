@@ -41,7 +41,7 @@ class Stepper:
         :param times: how many times to step
         """
         for _ in range(times):
-            await self.step_impl()
+            await self.step_impl(direction)
             self.steps += direction.direction
             try:
                 delay = max(1/rate, self.min_delay)
