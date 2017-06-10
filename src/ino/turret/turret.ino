@@ -2,12 +2,15 @@
 
 // Debugging
 #define DEBUG_I2C
-#define DEBUG_LOOP
+//#define DEBUG_LOOP
 //#define DEBUG_BYTES
 
 // Constants
 const int I2C_ADDR = 0x32;
 const int ST_PULSE_WIDTH = 100;
+
+// Laser
+const int LASER_EN = 10;
 
 // Gun
 const int GUN_SPR = 200;  // steps per revolution
@@ -21,7 +24,7 @@ const int GIM_SPR = 2048;
 const int GIM_MIN_DELAY = 2000;
 const int GIM_MAX_DELAY = 10000;
 const int GIM_UPPER = 4096;  // upper limit
-const int GIM_LOWER = -2048; // lower limit
+const int GIM_LOWER = -1500; // lower limit
 const int GIM_EN = 9;
 const int GIM_DR = 8;
 const int GIM_ST = 7;
@@ -41,11 +44,14 @@ unsigned long gimNext;
 unsigned int gimDelay;
 bool gimEnabled;
 
+char first;
+
 void setup() {
 
   Serial.begin(115200);
   
   Serial.println("Initializing pins");
+  pinMode(LASER_EN, OUTPUT);
   pinMode(GUN_EN, OUTPUT);
   pinMode(GUN_DR, OUTPUT);
   pinMode(GUN_ST, OUTPUT);
@@ -59,7 +65,8 @@ void setup() {
   Serial.print("Initializing I2C on ");
   Serial.println(I2C_ADDR);
   Wire.begin(I2C_ADDR);
-  Wire.onReceive(onRcv);
+  Wire.onReceive(onReceive);
+  Wire.onRequest(onRequest);
 }
 
 void loop() {
@@ -90,10 +97,10 @@ void loop() {
   }*/
   if (gimEnabled && gimTarget != gimStep) {  // If gimbal is sooner and has not reached target
     if (gimTarget > gimStep) {
-      digitalWrite(GIM_DR, HIGH);
+      digitalWrite(GIM_DR, LOW);
       gimStep++;
     } else {
-      digitalWrite(GIM_DR, LOW);
+      digitalWrite(GIM_DR, HIGH);
       gimStep--;
     }
     #ifdef DEBUG_LOOP
@@ -108,12 +115,14 @@ void loop() {
   }
 }
 
-void onRcv(int bytes) {
+void onReceive(int bytes) {
   
-  char first = Wire.read();
+  first = Wire.read();
 
-  Serial.print("Received command ");
+  #ifdef DEBUG_I2C
+  Serial.print("Received write command ");
   Serial.println(first);
+  #endif
   
   switch (first) {
     
@@ -135,7 +144,6 @@ void onRcv(int bytes) {
       }
       float rawDelay = 32768000000.0/(float(GIM_SPR)*speed);
       long rawTarget = GIM_SPR*angle/32767;
-      Serial.println(rawTarget);
       gimTarget = constrain(rawTarget, GIM_LOWER, GIM_UPPER);
       gimDelay = constrain(rawDelay, GIM_MIN_DELAY, GIM_MAX_DELAY);
       gimNext = micros();
@@ -195,10 +203,33 @@ void onRcv(int bytes) {
       setEnabled(Wire.read(), false);
     break;
 
+    case 'l': {  // Laser brightness (1bi: brightness)
+      byte level = Wire.read();
+      #ifdef DEBUG_I2C
+      Serial.print("Laser: ");
+      Serial.println(level);
+      #endif
+      analogWrite(LASER_EN, level);
+    }
+    break;
   }
   
   clearBuff();
   Serial.println();
+}
+
+void onRequest() {
+
+  #ifdef DEBUG_I2C
+  Serial.print("Received read command ");
+  Serial.println(first);
+  #endif
+  
+  switch (first) {
+    case 'a':  // Current pitch
+      Wire.write(gimStep*32768/GIM_SPR);
+  }
+  clearBuff();
 }
 
 int readInt() {
