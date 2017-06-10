@@ -2,6 +2,7 @@ import asyncio
 
 from RPi import GPIO as gpio
 
+from . import util
 
 class Stepper:
     """A generic stepper motor."""
@@ -62,7 +63,7 @@ class Stepper:
         track = int(track)
         if self.steps == track:  # Leave if we're already there
             return
-        direction = util.FORWARD if target > self.steps else util.REVERSE
+        direction = util.Direction.FORWARD if track > self.steps else util.Direction.REVERSE
         await self.step(direction, rate)
 
     async def step_to(self, target, rate, *, degrees=False):
@@ -78,8 +79,8 @@ class Stepper:
 
 class StepstickStepper(Stepper):
     """A stepper motor hooked up to a stepstick."""
-    def __init__(self, spr, en, dr, st):
-        super(StepstickStepper, self).__init__(spr)
+    def __init__(self, spr, en, dr, st, min_delay=None):
+        super(StepstickStepper, self).__init__(spr, min_delay)
         self.en = en
         self.dir = dr
         self.step = st

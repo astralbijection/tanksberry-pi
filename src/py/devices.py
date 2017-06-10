@@ -1,9 +1,11 @@
+import smbus
+
 import drivebase
 import hardware
 import turret
 
 
-i2c_bus = SMBus(1)
+i2c_bus = smbus.SMBus(1)
 
 left_drive = hardware.HBridgeMotor(17, 5, 27)
 right_drive = hardware.HBridgeMotor(23, 22, 6)

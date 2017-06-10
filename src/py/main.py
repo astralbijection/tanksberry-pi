@@ -79,7 +79,7 @@ class RobotControlProtocol(WebSocketServerProtocol):
             elif turret_control['pitch'] == 'down':
                 self.factory.pitch -= 1
 
-            asyncio.get_event_loop().run_until_complete(devices.turret.mov_pos(self.factory.yaw, self.factory.pitch, 10000))
+            asyncio.get_event_loop().run_until_complete(devices.turret.mov_pos(self.factory.yaw, self.factory.pitch, 180))
 
         except KeyError as e:
             log.warning('malformed data, key {} does not exist'.format(e))
@@ -122,8 +122,7 @@ if __name__ == "__main__":
     log.info('Starting server')
 
     twistedLog.startLogging(sys.stdout)
-    turret = None if serial_name is None else SerialPort(TurretProtocol(), 'p', 'dev/')
-    control = RobotControlFactory(u'ws://127.0.0.1:{}'.format(ws_port), turret=turret)
+    control = RobotControlFactory(u'ws://127.0.0.1:{}'.format(ws_port))
     control.protocol = RobotControlProtocol
     reactor.listenTCP(ws_port, control)
     reactor.run()
