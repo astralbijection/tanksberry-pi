@@ -1,3 +1,4 @@
+import asyncio
 import atexit
 import json
 import logging
@@ -67,8 +68,18 @@ class RobotControlProtocol(WebSocketServerProtocol):
 
             # Turret control
             turret_control = payload['turret']
-            pitch = turret_control['pitch']
-            yaw = turret_control['yaw']
+
+            if turret_control['yaw'] == 'left':
+                self.factory.yaw += 1
+            elif turret_control['yaw'] == 'right':
+                self.factory.yaw -= 1
+
+            if turret_control['pitch'] == 'up':
+                self.factory.pitch += 1
+            elif turret_control['pitch'] == 'down':
+                self.factory.pitch -= 1
+
+            asyncio.get_event_loop().run_until_complete(devices.turret.mov_pos(self.factory.yaw, self.factory.pitch, 10000))
 
         except KeyError as e:
             log.warning('malformed data, key {} does not exist'.format(e))
@@ -86,10 +97,12 @@ class RobotControlFactory(WebSocketServerFactory):
     def __init__(self, *args, **kwargs):
         super(RobotControlFactory, self).__init__(*args, **kwargs)
         self.lock = None
-        self.yaw_target = 0
+        #self.yaw_target = 0
+        self.yaw = 0
+        self.pitch = 0
         devices.drivebase.init()
         devices.turret.init()
-        devices.turret.track_target(lambda: self.yaw_target, 360)
+        #devices.turret.track_target(lambda: self.yaw_target, 360)
 
 
 if __name__ == "__main__":

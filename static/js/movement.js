@@ -52,6 +52,21 @@ $(document).keydown(function(event) {
 		}
 		break;
 	}
+
+	switch (event.key) {
+		case 'ArrowUp':
+			turret.pitch = 'up';
+			break;
+		case 'ArrowDown':
+			turret.pitch = 'down';
+			break;
+		case 'ArrowLeft':
+			turret.yaw = 'left';
+			break;
+		case 'ArrowRight':
+			turret.yaw = 'right';
+			break;
+	}
 }).keyup(function(event) {
 	switch (getDriveMode()) {
 	case 'wasd':
@@ -92,12 +107,4 @@ $(function() {
 			socket.send(JSON.stringify({drive: drive, turret: turret}));
 		}, 50);
 	}
-
-	// Initialize inputs
-	$('#pitch').mousemove(function() {
-		turret.pitch = $(this).val();
-	});
-	$('#yaw').mousemove(function() {
-		turret.yaw = $(this).val();
-	})
 });;
