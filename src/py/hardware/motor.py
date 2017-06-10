@@ -3,10 +3,9 @@ import asyncio
 from RPi import GPIO as gpio
 
 
-import pin
-import util
-import pyblaster
-
+from . import pin
+from . import util
+from . import pyblaster
 
 class DCMotor:
 

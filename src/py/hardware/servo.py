@@ -1,5 +1,5 @@
-import util
-from pyblaster import pyblaster
+from . import util
+from .pyblaster import pyblaster
 
 class Servo:
 

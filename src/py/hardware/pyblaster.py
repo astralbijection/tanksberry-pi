@@ -2,8 +2,8 @@ import logging
 import os
 import sys
 
-import pin
-import util
+from . import pin
+from . import util
 
 
 BLASTER_PATH = '/dev/pi-blaster'

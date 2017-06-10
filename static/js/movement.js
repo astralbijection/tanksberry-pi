@@ -104,7 +104,9 @@ $(function() {
 		console.log('connected');
 		setInterval(function() {
 			drive.mode = getDriveMode();
-			socket.send(JSON.stringify({drive: drive, turret: turret}));
+			var output = {drive: drive, turret: turret};
+			console.log(output);
+			socket.send(JSON.stringify(output));
 		}, 50);
 	}
 });;
