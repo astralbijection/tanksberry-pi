@@ -81,18 +81,18 @@ class StepstickStepper(Stepper):
     """A stepper motor hooked up to a stepstick."""
     def __init__(self, spr, en, dr, st, min_delay=None):
         super(StepstickStepper, self).__init__(spr, min_delay)
-        self.en = en
-        self.dir = dr
-        self.step = st
+        self.pin_en = en
+        self.pin_dir = dr
+        self.pin_step = st
 
     def init(self):
-        gpio.setup([self.en, self.dir, self.step], gpio.OUT)
+        gpio.setup([self.pin_en, self.pin_dir, self.pin_step], gpio.OUT)
     
     async def step_impl(self, direction):
-        gpio.output(self.dir, direction.direction == 1)
-        gpio.output(self.dir, True)
+        gpio.output(self.pin_dir, direction.direction == 1)
+        gpio.output(self.pin_step, True)
         await asyncio.sleep(0.001)
-        gpio.output(self.dir, False)
+        gpio.output(self.pin_step, False)
 
     async def set_enabled_impl(self, state):
-        gpio.output(self.en, not state)
+        gpio.output(self.pin_en, not state)
