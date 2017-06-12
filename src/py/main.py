@@ -17,61 +17,6 @@ import util
 
 log = logging.getLogger(__name__)
 
-'''
-def onMessage(self, payload, isBinary):
-    payload = json.loads(payload.decode('utf-8'))
-    log.debug('received message {}'.format(payload))
-
-    try:
-
-        # Drive control
-        drive_control = payload['drive']
-        drive_mode = drive_control['mode']
-        left, right = 0, 0
-
-        if drive_mode == 'tank':
-            left = float(drive_control['left'])
-            right = float(drive_control['right'])
-
-        elif drive_mode == 'wasd':
-            power = float(drive_control['power'])
-            turn = drive_control['turn']
-            left, right = 0, 0
-            if turn == 'none':
-                left, right = power, power
-            else:
-                if power == 0:
-                    if turn == 'left':
-                        left, right = -1, 1
-                    elif turn == 'right':
-                        left, right = 1, -1
-                elif (turn == 'left') ^ (power > 0):
-                    left, right = power, power/5
-                else:
-                    left, right = power/5, power
-
-        devices.drivebase.set_power(left, right) 
-        log.debug('motor output: l=%s r=%s', left, right)
-
-        # Turret control
-        turret_control = payload['turret']
-
-        if turret_control['yaw'] == 'left':
-            self.factory.yaw += 1
-        elif turret_control['yaw'] == 'right':
-            self.factory.yaw -= 1
-
-        if turret_control['pitch'] == 'up':
-            self.factory.pitch += 1
-        elif turret_control['pitch'] == 'down':
-            self.factory.pitch -= 1
-
-        asyncio.get_event_loop().run_until_complete(devices.turret.mov_pos(self.factory.yaw, 
-        self.factory.pitch, 180))
-
-    except KeyError as e:
-        log.warning('malformed data, key {} does not exist'.format(e))
-'''
 
 async def index_handler(request):
     log.info('webpage request')
@@ -91,13 +36,15 @@ async def socket_handler(request):
         
         if cmd == 'drive':
             drive = control.DriveControl(ctrl['left'], ctrl['right'])
-            log.debug(drive)
+            log.debug('drive input received: %s', drive)
             devices.drivebase.set_power(drive.left, drive.right)
         
         elif cmd == 'turret':
-            turret = control.TurretControl(**data['turret'])
+            turret = control.TurretControl(ctrl['yaw'], ctrl['pitch'])
+            log.debug('turret input received: %s', turret)
             devices.turret_uc.move_xgim(turret.pitch, constants.GIMBAL_SPEED)
             yaw_target = turret.yaw
+
     log.debug('websocket closed')
 
     return ws
