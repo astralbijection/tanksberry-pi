@@ -9,7 +9,7 @@ function getDriveMode() {
 }
 
 function invertBackwards() {
-	return $('#driveconfig input[name=invertBack]').val();
+	return $('#driveconfig input[name=invertBack]').is(':checked');
 }
 
 var tankDrive = {
@@ -53,7 +53,7 @@ var wasdDrive = {
 	power: 0,
 	turn: 'none',
 	keyDown: function(event) {
-		switch (key) {  
+		switch (event.key) {  
 		case 'w':
 			wasdDrive.power = 1;
 			break;
@@ -73,10 +73,10 @@ var wasdDrive = {
 	keyUp: function(event) {
 		switch (event.key) {
 		case 'w': case 's':
-			power = 0;
+			wasdDrive.power = 0;
 			break;
 		case 'a': case 'd':
-			turn = 'none';
+			wasdDrive.turn = 'none';
 			break;
 		default:
 			break;

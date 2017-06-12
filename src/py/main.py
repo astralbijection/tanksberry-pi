@@ -75,7 +75,7 @@ def onMessage(self, payload, isBinary):
 
 async def index_handler(request):
     log.info('webpage request')
-    return web.Response()
+    return web.FileResponse('views/index.html')
 
 async def socket_handler(request):
 
@@ -126,11 +126,11 @@ def main():
     app = web.Application()
     app.router.add_get('/', index_handler)
     app.router.add_get('/socket', socket_handler)
-    app.router.add_static('/static', '../../static')
+    app.router.add_static('/static', 'static')
 
     log.info('Starting server')
 
-    web.run_app(app)
+    web.run_app(app, port=8080)
 
 if __name__ == "__main__":
     main()
