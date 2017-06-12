@@ -7,8 +7,8 @@ import turret
 
 i2c_bus = smbus.SMBus(1)
 
-left_drive = hardware.HBridgeMotor(17, 5, 27)
-right_drive = hardware.HBridgeMotor(23, 22, 6)
+left_drive = hardware.HBridgeMotor(5, 17, 27)
+right_drive = hardware.HBridgeMotor(6, 22, 23)
 drivebase = drivebase.DriveBase(left_drive, right_drive)
 
 yaw_turret = hardware.StepstickStepper(2048, 0, 0, 0, 0.002)  # TODO: CHANGE THESE PINS

@@ -47,5 +47,6 @@ class HBridgeMotor(DCMotor):
 
     def _set_direction(self, direction):
         a, b = direction.h_bridge
+        print(a, b)
         self.a.set(a)
         self.b.set(b)

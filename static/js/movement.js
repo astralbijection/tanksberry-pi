@@ -129,13 +129,13 @@ $(function() {
 		mode.keyDown(event);
 		var output = mode.output();
 		console.log(output);
-		socket.send(JSON.stringify(output));
+		socket.send(JSON.stringify(['drive', output]));
 	}).keyup(function(event) {
 		var mode = driveModes[getDriveMode()];
 		mode.keyUp(event);
 		var output = mode.output();
 		console.log(output);
-		socket.send(JSON.stringify(output));
+		socket.send(JSON.stringify(['drive', output]));
 	});
 
 	// Initialize socket

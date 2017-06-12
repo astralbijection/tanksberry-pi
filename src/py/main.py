@@ -90,7 +90,7 @@ async def socket_handler(request):
         cmd, ctrl = data
         
         if cmd == 'drive':
-            drive = control.DriveControl(ctrl.left, ctrl.right)
+            drive = control.DriveControl(ctrl['left'], ctrl['right'])
             log.debug(drive)
             devices.drivebase.set_power(drive.left, drive.right)
         
@@ -113,6 +113,8 @@ def yaw_handler(target):
         direction = hardware.Direction.FORWARD if track > devices.yaw_turret.steps else util.Direction.REVERSE
         devices.yaw_turret.step(direction, constants.GIMBAL_SPEED)
 
+async def cleanup():
+    gpio.cleanup()
 
 def main():
 
@@ -142,6 +144,8 @@ def main():
     app.router.add_get('/', index_handler)
     app.router.add_get('/socket', socket_handler)
     app.router.add_static('/static', 'static')
+    
+    app.on_cleanup.append(cleanup)
 
     log.info('Starting server')
 
