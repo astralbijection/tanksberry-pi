@@ -86,13 +86,18 @@ async def socket_handler(request):
     async for msg in ws:
         log.debug('received message: %s', msg.data)
         data = json.loads(msg.data)
-
-        drive = control.DriveControl(**data['drive'])
-        devices.drivebase.set_power(*drive)
-
-        turret = control.TurretControl(**data['turret'])
-        devices.turret_uc.move_xgim(turret.pitch, constants.GIMBAL_SPEED)
-        yaw_target = turret.yaw
+        
+        cmd, ctrl = data
+        
+        if cmd == 'drive':
+            drive = control.DriveControl(**ctrl)
+            devices.drivebase.set_power(*drive)
+        
+        elif cmd == 'turret':
+            turret = control.TurretControl(**data['turret'])
+            devices.turret_uc.move_xgim(turret.pitch, constants.GIMBAL_SPEED)
+            yaw_target = turret.yaw
+    log.debug('websocket closed')
 
     return ws
 
@@ -114,6 +119,7 @@ def main():
     logging.basicConfig(level=logging.DEBUG)
     log.setLevel(logging.DEBUG)
 
+    log.debug('debug enabled')
     log.info('Initializing Raspberry Pi GPIO')
     gpio.setmode(gpio.BCM)
 

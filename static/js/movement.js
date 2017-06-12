@@ -129,17 +129,17 @@ $(function() {
 		mode.keyDown(event);
 		var output = mode.output();
 		console.log(output);
-		socket.write(JSON.stringify(output));
+		socket.send(JSON.stringify(output));
 	}).keyup(function(event) {
 		var mode = driveModes[getDriveMode()];
 		mode.keyUp(event);
 		var output = mode.output();
 		console.log(output);
-		socket.write(JSON.stringify(output));
+		socket.send(JSON.stringify(output));
 	});
 
 	// Initialize socket
-	socket = new WebSocket('ws://' + window.location.hostname + ':8081');
+	socket = new WebSocket('ws://' + window.location.host + '/socket');
 	socket.onopen = function() {
 		console.log('connected to robot');
 	};
