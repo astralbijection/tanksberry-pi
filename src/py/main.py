@@ -90,8 +90,9 @@ async def socket_handler(request):
         cmd, ctrl = data
         
         if cmd == 'drive':
-            drive = control.DriveControl(**ctrl)
-            devices.drivebase.set_power(*drive)
+            drive = control.DriveControl(ctrl.left, ctrl.right)
+            log.debug(drive)
+            devices.drivebase.set_power(drive.left, drive.right)
         
         elif cmd == 'turret':
             turret = control.TurretControl(**data['turret'])
@@ -103,6 +104,7 @@ async def socket_handler(request):
 
 
 def yaw_handler(target):
+    log.info('Yaw handler started.')
     while True:
         track = target() * devices.yaw_turret.spr / 360
         track = int(track)
@@ -123,9 +125,16 @@ def main():
     log.info('Initializing Raspberry Pi GPIO')
     gpio.setmode(gpio.BCM)
 
+    log.info('Initializing devices')
+    devices.drivebase.init()
+    devices.yaw_turret.init()
+
     log.info('Initializing yaw thread')
     yaw_target = 0
     yaw_thread = threading.Thread(target=yaw_handler, args=(lambda: yaw_target,))
+    
+    log.info('Starting yaw thread')
+    yaw_thread.start()
     
     log.info('Initializing server')
 
