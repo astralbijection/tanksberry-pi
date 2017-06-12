@@ -60,7 +60,6 @@ class TurretMicrocontroller:
 class Turret:
     """The whole, unified turret with microcontroller and stepper"""
     def __init__(self, uc, stepper):
-        super(Turret, self).__init__()
         self.uc = uc
         self.stepper = stepper
 

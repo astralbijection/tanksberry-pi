@@ -1,129 +1,136 @@
-import asyncio
-import atexit
 import json
 import logging
 import logging.config
-import os
-import sys
+import threading
 
-from twisted.internet import reactor
-from twisted.internet.serialport import SerialPort
-from twisted.protocols.basic import LineReceiver
-from twisted.python import log as twistedLog
+import aiohttp
+from aiohttp import web
 
-from autobahn.twisted.websocket import WebSocketServerFactory, WebSocketServerProtocol
+from RPi import GPIO as gpio 
 
-from RPi import GPIO as gpio
-
+import constants
+import control
 import devices
+import hardware
+import util
 
 
 log = logging.getLogger(__name__)
 
-
-class RobotControlProtocol(WebSocketServerProtocol):
-
-    def onConnect(self, request):
-        if self.factory.lock is None:
-            self.factory.lock = self
-            log.info('client connected')
-        else:
-            self.sendClose()
-            log.warning('client rejected due to existing client')
-
-    def onMessage(self, payload, isBinary):
-        payload = json.loads(payload.decode('utf-8'))
-        log.debug('received message {}'.format(payload))
-
-        try:
-
-            # Drive control
-            drive_control = payload['drive']
-            drive_mode = drive_control['mode']
-            left, right = 0, 0
-
-            if drive_mode == 'tank':
-                left = float(drive_control['left'])
-                right = float(drive_control['right'])
-
-            elif drive_mode == 'wasd':
-                power = float(drive_control['power'])
-                turn = drive_control['turn']
-                left, right = 0, 0
-                if turn == 'none':
-                    left, right = power, power
-                else:
-                    if power == 0:
-                        if turn == 'left':
-                            left, right = -1, 1
-                        elif turn == 'right':
-                            left, right = 1, -1
-                    elif (turn == 'left') ^ (power > 0):
-                        left, right = power, power/5
-                    else:
-                        left, right = power/5, power
-
-            devices.drivebase.set_power(left, right) 
-            log.debug('motor output: l=%s r=%s', left, right)
-
-            # Turret control
-            turret_control = payload['turret']
-
-            if turret_control['yaw'] == 'left':
-                self.factory.yaw += 1
-            elif turret_control['yaw'] == 'right':
-                self.factory.yaw -= 1
-
-            if turret_control['pitch'] == 'up':
-                self.factory.pitch += 1
-            elif turret_control['pitch'] == 'down':
-                self.factory.pitch -= 1
-
-            asyncio.get_event_loop().run_until_complete(devices.turret.mov_pos(self.factory.yaw, self.factory.pitch, 180))
-
-        except KeyError as e:
-            log.warning('malformed data, key {} does not exist'.format(e))
-
-    def onClose(self, wasClean, code, reason):
-        if self.factory.lock is self:
-            log.info('client disconnected, removing lock')
-            self.factory.lock = None
-        else:
-            log.info('rejected client disconnected')
-        
-
-class RobotControlFactory(WebSocketServerFactory):
-
-    def __init__(self, *args, **kwargs):
-        super(RobotControlFactory, self).__init__(*args, **kwargs)
-        self.lock = None
-        #self.yaw_target = 0
-        self.yaw = 0
-        self.pitch = 0
-        devices.drivebase.init()
-        devices.turret.init()
-        #devices.turret.track_target(lambda: self.yaw_target, 360)
-
-
-if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG)
-    log.setLevel(logging.DEBUG)
-    log.info('Starting server')
+'''
+def onMessage(self, payload, isBinary):
+    payload = json.loads(payload.decode('utf-8'))
+    log.debug('received message {}'.format(payload))
 
     try:
-        ws_port = int(sys.argv[1])
-    except (IndexError, ValueError):
-        ws_port = 8081
-    log.info('Websocket opens on port %s', ws_port)
+
+        # Drive control
+        drive_control = payload['drive']
+        drive_mode = drive_control['mode']
+        left, right = 0, 0
+
+        if drive_mode == 'tank':
+            left = float(drive_control['left'])
+            right = float(drive_control['right'])
+
+        elif drive_mode == 'wasd':
+            power = float(drive_control['power'])
+            turn = drive_control['turn']
+            left, right = 0, 0
+            if turn == 'none':
+                left, right = power, power
+            else:
+                if power == 0:
+                    if turn == 'left':
+                        left, right = -1, 1
+                    elif turn == 'right':
+                        left, right = 1, -1
+                elif (turn == 'left') ^ (power > 0):
+                    left, right = power, power/5
+                else:
+                    left, right = power/5, power
+
+        devices.drivebase.set_power(left, right) 
+        log.debug('motor output: l=%s r=%s', left, right)
+
+        # Turret control
+        turret_control = payload['turret']
+
+        if turret_control['yaw'] == 'left':
+            self.factory.yaw += 1
+        elif turret_control['yaw'] == 'right':
+            self.factory.yaw -= 1
+
+        if turret_control['pitch'] == 'up':
+            self.factory.pitch += 1
+        elif turret_control['pitch'] == 'down':
+            self.factory.pitch -= 1
+
+        asyncio.get_event_loop().run_until_complete(devices.turret.mov_pos(self.factory.yaw, 
+        self.factory.pitch, 180))
+
+    except KeyError as e:
+        log.warning('malformed data, key {} does not exist'.format(e))
+'''
+
+async def index_handler(request):
+    log.info('webpage request')
+    return web.Response()
+
+async def socket_handler(request):
+
+    log.info('websocket request')
+    ws = web.WebSocketResponse()
+    await ws.prepare(request)
+
+    async for msg in ws:
+        log.debug('received message: %s', msg.data)
+        data = json.loads(msg.data)
+
+        drive = control.DriveControl(**data['drive'])
+        devices.drivebase.set_power(*drive)
+
+        turret = control.TurretControl(**data['turret'])
+        devices.turret_uc.move_xgim(turret.pitch, constants.GIMBAL_SPEED)
+        yaw_target = turret.yaw
+
+    return ws
+
+
+def yaw_handler(target):
+    while True:
+        track = target() * devices.yaw_turret.spr / 360
+        track = int(track)
+        if devices.yaw_turret.steps == track:  # Leave if we're already there
+            continue
+        direction = hardware.Direction.FORWARD if track > devices.yaw_turret.steps else util.Direction.REVERSE
+        devices.yaw_turret.step(direction, constants.GIMBAL_SPEED)
+
+
+def main():
+
+    global yaw_thread, yaw_target
+
+    logging.basicConfig(level=logging.DEBUG)
+    log.setLevel(logging.DEBUG)
 
     log.info('Initializing Raspberry Pi GPIO')
     gpio.setmode(gpio.BCM)
 
+    log.info('Initializing yaw thread')
+    yaw_target = 0
+    yaw_thread = threading.Thread(target=yaw_handler, args=(lambda: yaw_target,))
+    
+    log.info('Initializing server')
+
+    app = web.Application()
+    app.router.add_get('/', index_handler)
+    app.router.add_get('/socket', socket_handler)
+    app.router.add_static('/static', '../../static')
+
     log.info('Starting server')
 
-    twistedLog.startLogging(sys.stdout)
-    control = RobotControlFactory(u'ws://127.0.0.1:{}'.format(ws_port))
-    control.protocol = RobotControlProtocol
-    reactor.listenTCP(ws_port, control)
-    reactor.run()
-    atexit.register(gpio.cleanup)
+    web.run_app(app)
+
+if __name__ == "__main__":
+    main()

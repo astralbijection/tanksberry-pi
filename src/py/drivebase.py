@@ -1,6 +1,3 @@
-import asyncio
-
-
 class DriveBase:
 
     def __init__(self, left_motor, right_motor):
@@ -23,8 +20,3 @@ class DriveBase:
 
     def set_right(self, power):
         self.right_motor.set_power(power)
-
-    async def run_for_time(self, duration, power, r=None, end=0, r_end=0):
-        self.set_power(power, r)
-        await asyncio.sleep(duration)
-        self.set_power(end, r_end)

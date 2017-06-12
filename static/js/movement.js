@@ -1,112 +1,146 @@
 /* global $ */
 
-var drive = {
-	mode: 'none',
-	power: 0,
-	left: 0,
-	right: 0,
-	turn: 'none'
-};
-var turret = {
-	pitch: 0,
-	yaw: 0
-};
+const TURN_REDUCTION = 0.2;
+
+var socket;
 
 function getDriveMode() {
 	return $('#driveconfig input[name=drivemode]:checked').val();
 }
 
-$(document).keydown(function(event) {
+function invertBackwards() {
+	return $('#driveconfig input[name=invertBack]').val();
+}
 
-	switch (getDriveMode()) {
-	case 'wasd':
-		switch (event.key) {
-		case 'w':
-			drive.power = 1;
-			break;
-		case 's':
-			drive.power = -1;
-			break;
-		case 'a':
-			drive.turn = 'left';
-			break;
-		case 'd':
-			drive.turn = 'right';
-			break;
-		}
-		break;
-	case 'tank':
+var tankDrive = {
+	left: 0,
+	right: 0,
+	keyDown: function(event) {
 		switch (event.key) {
 		case 'q':
-			drive.left = 1;
+			tankDrive.left = 1;
 			break;
 		case 'a':
-			drive.left = -1;
+			tankDrive.left = -1;
 			break;
 		case 'e':
-			drive.right = 1;
+			tankDrive.right = 1;
 			break;
 		case 'd':
-			drive.right = -1;
+			tankDrive.right = -1;
+			break;
+		default:
 			break;
 		}
-		break;
-	}
-
-	switch (event.key) {
-		case 'ArrowUp':
-			turret.pitch = 'up';
-			break;
-		case 'ArrowDown':
-			turret.pitch = 'down';
-			break;
-		case 'ArrowLeft':
-			turret.yaw = 'left';
-			break;
-		case 'ArrowRight':
-			turret.yaw = 'right';
-			break;
-	}
-}).keyup(function(event) {
-	switch (getDriveMode()) {
-	case 'wasd':
-		switch (event.key) {
-		case 'w': case 's':
-			drive.power = 0;
-			break;
-		case 'a': case 'd':
-			drive.turn = 'none'
-			break;
-		}
-		break;
-	case 'tank':
+	},
+	keyUp: function(event) {
 		switch(event.key) {
 		case 'q': case 'a':
-			drive.left = 0;
+			tankDrive.left = 0;
 			break;
 		case 'e': case 'd':
-			drive.right = 0;
+			tankDrive.right = 0;
+			break;
+		default:
 			break;
 		}
-		break;
+	},
+	output: function() {
+		return {left: tankDrive.left, right: tankDrive.right};
 	}
-});
-
-
-var socket;
-
+};
+var wasdDrive = {
+	power: 0,
+	turn: 'none',
+	keyDown: function(event) {
+		switch (key) {  
+		case 'w':
+			wasdDrive.power = 1;
+			break;
+		case 's':
+			wasdDrive.power = -1;
+			break;
+		case 'a':
+			wasdDrive.turn = 'left';
+			break;
+		case 'd':
+			wasdDrive.turn = 'right';
+			break;
+		default:
+			break;
+		}
+	},
+	keyUp: function(event) {
+		switch (event.key) {
+		case 'w': case 's':
+			power = 0;
+			break;
+		case 'a': case 'd':
+			turn = 'none';
+			break;
+		default:
+			break;
+		}
+	},
+	output: function() {
+		var left = wasdDrive.power, right = wasdDrive.power;
+		if (wasdDrive.power !== 0) {  // Moving forwards or backwards
+			if (wasdDrive.power < 0 && invertBackwards()) {  // Swap left and right if necessary
+				if (wasdDrive.turn == 'right') {
+					wasdDrive.turn = 'left';
+				} else if (wasdDrive.turn == 'left') {
+					wasdDrive.turn = 'right';
+				}
+			}
+			switch (wasdDrive.turn) {  // Reduce power to the side we are turning to
+			case 'left':
+				left *= TURN_REDUCTION;
+				break;
+			case 'right':
+				right *= TURN_REDUCTION;
+				break;
+			default:
+				break;
+			}
+		} else {  // Robot staying in place
+			switch (wasdDrive.turn) {  // Invert for a point turn
+			case 'left':
+				left *= -1;
+				break;
+			case 'right':
+				right *= -1;
+				break;
+			default:
+				break;
+			}
+		}
+		return {left: left, right: right};
+	}
+};
+var driveModes = {
+	tank: tankDrive,
+	wasd: wasdDrive
+};
 
 $(function() {
+
+	$(document).keydown(function(event) {
+		var mode = driveModes[getDriveMode()];
+		mode.keyDown(event);
+		var output = mode.output();
+		console.log(output);
+		socket.write(JSON.stringify(output));
+	}).keyup(function(event) {
+		var mode = driveModes[getDriveMode()];
+		mode.keyUp(event);
+		var output = mode.output();
+		console.log(output);
+		socket.write(JSON.stringify(output));
+	});
 
 	// Initialize socket
 	socket = new WebSocket('ws://' + window.location.hostname + ':8081');
 	socket.onopen = function() {
-		console.log('connected');
-		setInterval(function() {
-			drive.mode = getDriveMode();
-			var output = {drive: drive, turret: turret};
-			console.log(output);
-			socket.send(JSON.stringify(output));
-		}, 50);
-	}
-});;
+		console.log('connected to robot');
+	};
+});
