@@ -137,6 +137,15 @@ $(function() {
 		console.log(output);
 		socket.send(JSON.stringify(['drive', output]));
 	});
+	
+	$('#submitTurret').click(function() {
+		var output = {
+			pitch: parseFloat($('#pitch').val()),
+			yaw: parseFloat($('#yaw').val())
+		};
+		console.log(output);
+		socket.send(JSON.stringify(['turret', output]));
+	});
 
 	// Initialize socket
 	socket = new WebSocket('ws://' + window.location.host + '/socket');
