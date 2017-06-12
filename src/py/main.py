@@ -40,7 +40,7 @@ async def socket_handler(request):
             devices.drivebase.set_power(drive.left, drive.right)
         
         elif cmd == 'turret':
-            turret = control.TurretControl(ctrl['yaw'], ctrl['pitch'])
+            turret = control.TurretControl(ctrl['pitch'], ctrl['yaw'])
             log.debug('turret input received: %s', turret)
             devices.turret_uc.move_xgim(turret.pitch, constants.GIMBAL_SPEED)
             yaw_target = turret.yaw
