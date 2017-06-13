@@ -21,7 +21,7 @@ const int GUN_ST = 4;
 
 // Gimbal
 const int GIM_SPR = 2048;
-const int GIM_MIN_DELAY = 2000;
+const int GIM_MIN_DELAY = 3000;
 const int GIM_MAX_DELAY = 10000;
 const int GIM_UPPER = 4096;  // upper limit
 const int GIM_LOWER = -1500; // lower limit
