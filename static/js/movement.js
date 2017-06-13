@@ -147,6 +147,12 @@ $(function() {
 		socket.send(JSON.stringify(['turret', output]));
 	});
 
+	$('#laserLevel').mousemove(function(event) {
+		var output = parseFloat($('#laserLevel').val());
+		console.log(output);
+		socket.send(JSON.stringify(['laser', output]));
+	});
+
 	// Initialize socket
 	socket = new WebSocket('ws://' + window.location.host + '/socket');
 	socket.onopen = function() {

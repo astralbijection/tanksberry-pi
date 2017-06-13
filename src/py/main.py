@@ -51,6 +51,10 @@ class SocketHandler:
                 self.yaw_thread.yaw_target = turret.yaw
                 log.debug('yt=%s', self.yaw_thread.yaw_target)
 
+            elif cmd == 'laser':
+                devices.turret_uc.set_laser(ctrl)
+                log.debug('laser input received: %s', ctrl)
+    
         log.debug('websocket closed')
 
         return ws

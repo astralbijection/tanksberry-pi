@@ -17,10 +17,11 @@
 			<input type="radio" name="drivemode" value="tank"><p>Tank Drive</p>
 			<input type="radio" name="drivemode" value="wasd"><p>WASD</p>
 			<input type="checkbox" name="invertBack"><p>Invert reverse WASD</p>
-			<p>Pitch</p><input id="pitch" type="number" default="0" name="pitch" min="-15" max="45">
-			<p>Yaw</p><input id="yaw" type="number" default="0" name="yaw" min="-180" max="180">
+			<input type="range" id="laserLevel" min="0" max="1" step="0.01" value="0"><p>Laser</p>
+			<p>Pitch</p><input id="pitch" type="number" value="0" name="pitch" min="-15" max="45">
+			<p>Yaw</p><input id="yaw" type="number" value="0" name="yaw" min="-180" max="180">
 		</form>
-			<button id="submitTurret">Submit Turret</button>
+		<button id="submitTurret">Submit Turret</button>
 	</div>
 </body>
 </html>
