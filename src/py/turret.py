@@ -1,3 +1,5 @@
+import logging
+
 from smbus import SMBus
 
 import util
@@ -6,6 +8,8 @@ import util
 GIMBAL = ord('g')
 GUN = ord('t')
 
+
+log = logging.getLogger(__name__)
 
 class TurretMicrocontroller:
     """The Arduino, connected via I2C, that controls firing and pitch"""
@@ -18,6 +22,7 @@ class TurretMicrocontroller:
         :param angle: angle to move to, in degrees
         :param speed: rate to move at, in degrees/second
         """
+        log.debug('moving x-gimbal to %sdeg at %sdeg/s', angle, speed)
         out_a = util.intbyte(int(util.lin_map(angle, 0, 360, 0, 32768)), True)
         out_s = util.intbyte(int(util.lin_map(speed, 0, 360, 0, 32768)))
         self.bus.write_i2c_block_data(self.i2c_addr, ord('m'), out_a + out_s)

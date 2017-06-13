@@ -22,50 +22,62 @@ async def index_handler(request):
     log.info('webpage request')
     return web.FileResponse('views/index.html')
 
-async def socket_handler(request):
+class SocketHandler:
+    
+    def __init__(self, yaw_thread):
+        self.yaw_thread = yaw_thread
+    
+    async def handler(self, request):
+    
+        log.info('websocket request')
+        ws = web.WebSocketResponse()
+        await ws.prepare(request)
 
-    log.info('websocket request')
-    ws = web.WebSocketResponse()
-    await ws.prepare(request)
-
-    async for msg in ws:
-        log.debug('received message: %s', msg.data)
-        data = json.loads(msg.data)
+        async for msg in ws:
+            log.debug('received message: %s', msg.data)
+            data = json.loads(msg.data)
         
-        cmd, ctrl = data
+            cmd, ctrl = data
         
-        if cmd == 'drive':
-            drive = control.DriveControl(ctrl['left'], ctrl['right'])
-            log.debug('drive input received: %s', drive)
-            devices.drivebase.set_power(drive.left, drive.right)
+            if cmd == 'drive':
+                drive = control.DriveControl(ctrl['left'], ctrl['right'])
+                log.debug('drive input received: %s', drive)
+                devices.drivebase.set_power(drive.left, drive.right)
         
-        elif cmd == 'turret':
-            turret = control.TurretControl(ctrl['pitch'], ctrl['yaw'])
-            log.debug('turret input received: %s', turret)
-            devices.turret_uc.move_xgim(turret.pitch, constants.GIMBAL_SPEED)
-            yaw_target = turret.yaw
+            elif cmd == 'turret':
+                turret = control.TurretControl(ctrl['pitch'], ctrl['yaw'])
+                log.debug('turret input received: %s', turret)
+                devices.turret_uc.move_xgim(turret.pitch, constants.GIMBAL_SPEED)
+                self.yaw_thread.yaw_target = turret.yaw
+                log.debug('yt=%s', self.yaw_thread.yaw_target)
 
-    log.debug('websocket closed')
+        log.debug('websocket closed')
 
-    return ws
+        return ws
 
+class YawThread(threading.Thread):
+    
+    def __init__(self):
+        super().__init__()
+        self.yaw_target = 0
 
-def yaw_handler(target):
-    log.info('Yaw handler started.')
-    while True:
-        track = target() * devices.yaw_turret.spr / 360
-        track = int(track)
-        if devices.yaw_turret.steps == track:  # Leave if we're already there
-            continue
-        direction = hardware.Direction.FORWARD if track > devices.yaw_turret.steps else util.Direction.REVERSE
-        devices.yaw_turret.step(direction, constants.GIMBAL_SPEED)
+    def run(self):
+        log.info('Yaw handler started.')
+        while True:
+            track = self.yaw_target * devices.yaw_turret.spr / 360
+            track = int(track)
+            if devices.yaw_turret.steps == track:  # Leave if we're already there
+#                log.debug('yaw target reached')
+                continue
+            direction = hardware.Direction.FORWARD if track > devices.yaw_turret.steps else hardware.Direction.REVERSE
+            devices.yaw_turret.step(direction, constants.GIMBAL_SPEED)
 
-async def cleanup():
+_yaw_thread = None
+
+async def cleanup(event):
     gpio.cleanup()
 
 def main():
-
-    global yaw_thread, yaw_target
 
     logging.basicConfig(level=logging.DEBUG)
     log.setLevel(logging.DEBUG)
@@ -79,17 +91,19 @@ def main():
     devices.yaw_turret.init()
 
     log.info('Initializing yaw thread')
-    yaw_target = 0
-    yaw_thread = threading.Thread(target=yaw_handler, args=(lambda: yaw_target,))
+    _yaw_thread = YawThread()
     
     log.info('Starting yaw thread')
-    yaw_thread.start()
+    _yaw_thread.start()
+    log.debug('initialized %s', _yaw_thread)
     
     log.info('Initializing server')
+    
+    socket_handler = SocketHandler(_yaw_thread)
 
     app = web.Application()
     app.router.add_get('/', index_handler)
-    app.router.add_get('/socket', socket_handler)
+    app.router.add_get('/socket', socket_handler.handler)
     app.router.add_static('/static', 'static')
     
     app.on_cleanup.append(cleanup)
