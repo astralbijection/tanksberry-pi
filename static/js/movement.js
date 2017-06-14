@@ -1,8 +1,9 @@
 /* global $ */
 
 const TURN_REDUCTION = 0.2;
+const KEYDOWN_TIMER = 750;
 
-var socket, laserInterval;
+var socket, laserInterval, nextKeydowns = {};
 
 function getDriveMode() {
 	return $('#driveconfig input[name=drivemode]:checked').val();
@@ -127,17 +128,22 @@ var driveModes = {
 $(function() {
 
 	$(document).keydown(function(event) {
-		var mode = driveModes[getDriveMode()];
-		mode.keyDown(event);
-		var output = mode.output();
-		console.log(output);
-		socket.send(JSON.stringify(['drive', output]));
+		var currentTime = (new Date).getTime();
+		if (!(event.key in nextKeydowns) || currentTime > nextKeydowns[event.key]) {  // are we allowed to keydown yet?
+			var mode = driveModes[getDriveMode()];
+			mode.keyDown(event);
+			var output = mode.output();
+			console.log('keydown', output);
+			socket.send(JSON.stringify(['drive', output]));
+		}
+		nextKeydowns[event.key] = currentTime + KEYDOWN_TIMER;  // cannot keydown until this time
 	}).keyup(function(event) {
 		var mode = driveModes[getDriveMode()];
 		mode.keyUp(event);
 		var output = mode.output();
-		console.log(output);
+		console.log('keyup', output);
 		socket.send(JSON.stringify(['drive', output]));
+		nextKeydowns[event.key] = 0;  // reset the keydown timer
 	});
 	
 	$('#submitTurret').click(function() {
