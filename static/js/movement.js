@@ -2,7 +2,7 @@
 
 const TURN_REDUCTION = 0.2;
 
-var socket;
+var socket, laserInterval;
 
 function getDriveMode() {
 	return $('#driveconfig input[name=drivemode]:checked').val();
@@ -102,13 +102,15 @@ var wasdDrive = {
 			default:
 				break;
 			}
-		} else {  // Robot staying in place
+		} else {  // No W or S
 			switch (wasdDrive.turn) {  // Invert for a point turn
 			case 'left':
-				left *= -1;
+				left = -1;
+				right = 1;
 				break;
 			case 'right':
-				right *= -1;
+				left = 1;
+				right = -1;
 				break;
 			default:
 				break;
@@ -147,10 +149,14 @@ $(function() {
 		socket.send(JSON.stringify(['turret', output]));
 	});
 
-	$('#laserLevel').mousemove(function(event) {
-		var output = parseFloat($('#laserLevel').val());
-		console.log(output);
-		socket.send(JSON.stringify(['laser', output]));
+	$('#laserLevel').mousedown(function(event) {
+		laserInterval = setInterval(function() {
+			var output = parseFloat($('#laserLevel').val());
+			console.log(output);
+			socket.send(JSON.stringify(['laser', output]));
+		}, 250);
+	}).mouseup(function(event) {
+		clearInterval(laserInterval);
 	});
 
 	// Initialize socket
