@@ -125,8 +125,8 @@ def main(port, camera_port, mjpg_streamer):
 
     if mjpg_streamer is not None:
         log.info('Starting mjpg-streamer subprocesses')
-        front_camera = subprocess.Popen(('camscripts/camfront.sh', mjpg_streamer, camera_port))
-        scope_camera = subprocess.Popen(('camscripts/camscope.sh', mjpg_streamer, camera_port + 1))
+        front_camera = subprocess.Popen(('camscripts/camfront.sh', mjpg_streamer, str(camera_port)))
+        scope_camera = subprocess.Popen(('camscripts/camscope.sh', mjpg_streamer, str(camera_port + 1)))
 
     log.info('Starting yaw thread')
     stop_event = threading.Event()
