@@ -1,1 +1,1 @@
-python3 src/py/main.py
+python3 src/py/main.py -p 8080 -c 8081 -m /home/pi/source/mjpg-streamer/mjpg-streamer-experimental/
