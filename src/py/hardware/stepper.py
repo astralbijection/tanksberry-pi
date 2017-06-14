@@ -65,4 +65,4 @@ class StepstickStepper(Stepper):
         gpio.output(self.pin_step, False)
 
     def set_enabled_impl(self, state):
-        gpio.output(self.pin_en, not state)
+        gpio.output(self.dspin_en, not state)
