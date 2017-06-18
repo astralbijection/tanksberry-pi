@@ -14,6 +14,8 @@ const int LASER_EN = 10;
 
 // Gun
 const int GUN_SPR = 200;  // steps per revolution
+const int GUN_PRIMED = GUN_SPR * 3/8;  // steps to rotate to prime the gun
+const int GUN_FIRED = GUN_SPR * 5/8;  // steps to rotate fire the gun
 const int GUN_MIN_DELAY = 3000;  // lowest delay between pulses, in us
 const int GUN_EN = 6;
 const int GUN_DR = 5;
@@ -124,7 +126,9 @@ void onReceive(int bytes) {
   Serial.println(first);
   #endif
   
-  switch (first) {
+  switch (first) {  
+    // parameter notes: command description (type1: arg1, type2: arg2)
+    // type structure: [length in bytes]b[type (i.e. i for int, c for char)]
     
     case 'm': {  // Move gimbal (2bi: angle, 2bi: speed)
 
@@ -162,6 +166,8 @@ void onReceive(int bytes) {
     break;
     
     case 't': {  // Fire gun (1bi: times, 2bi: period)
+
+      /*
       byte times = Wire.read();
       unsigned int period = readInt();
       
@@ -171,10 +177,12 @@ void onReceive(int bytes) {
       Serial.print(", "); 
       Serial.println(period);
       #endif
-      
       gunTimes += times;
       gunDelay = max(period, GUN_MIN_DELAY);
       gunNext = micros();
+      */
+
+      moveGun(GUN_SPR * (gunStep / GUN_SPR + 1));
       
       #ifdef DEBUG_I2C
       Serial.print("Times to fire gun: ");
@@ -186,14 +194,31 @@ void onReceive(int bytes) {
     break;
     
     case 'r':  // Return gun to neutral
+      /*
       gunReturning = true;
       gunNext = micros();
+      */
+      if (gunStep % GUN_SPR > GUN_FIRED) {
+        moveGun(GUN_SPR * (gunStep / GUN_SPR + 1));
+      } else {
+        moveGun(GUN_SPR * (gunStep / GUN_SPR));
+      }
     break;
-    
+
+    case 'p':  // Prime the gun
+      if (gunStep % GUN_SPR > GUN_FIRED) {
+        moveGun(GUN_SPR * (gunStep / GUN_SPR + 1) + GUN_PRIMED);
+      } else {
+        moveGun(GUN_SPR * (gunStep / GUN_SPR) + GUN_PRIMED);
+      }
+    break;
+
+    /*
     case 'q':  // Stop gun
       gunTimes = 0;
       gunReturning = false;
     break;
+    */
     
     case 'c':  // Engage motor and calibrate if was disengaged (1bc: motor)
       setEnabled(Wire.read(), true);
@@ -250,6 +275,21 @@ void pulseOut(int pin, unsigned long width) {
   digitalWrite(pin, HIGH);
   delayMicroseconds(width);
   digitalWrite(pin, LOW);
+}
+
+void moveGun(int dest) {
+  short dir;
+  if (dest > gunStep) {
+    dir = 1;
+    digitalWrite(GUN_ST, HIGH);
+  } else {
+    dir = -1;
+    digitalWrite(GUN_ST, LOW);
+  }
+  for (; gunStep != dest; gunStep++) {
+    pulseOut(GUN_ST, 100);
+    delay(GUN_MIN_DELAY);
+  }
 }
 
 void clearBuff() {
