@@ -17,9 +17,9 @@ const int GUN_SPR = 200;  // steps per revolution
 const int GUN_PRIMED = GUN_SPR * 3/8;  // steps to rotate to prime the gun
 const int GUN_FIRED = GUN_SPR * 5/8;  // steps to rotate fire the gun
 const int GUN_MIN_DELAY = 3000;  // lowest delay between pulses, in us
-const int GUN_EN = 6;
-const int GUN_DR = 5;
-const int GUN_ST = 4;
+const int GUN_EN = 9;
+const int GUN_DR = 8;
+const int GUN_ST = 7;
 
 // Gimbal
 const int GIM_SPR = 2048;
@@ -27,9 +27,9 @@ const int GIM_MIN_DELAY = 3000;
 const int GIM_MAX_DELAY = 10000;
 const int GIM_UPPER = 4096;  // upper limit
 const int GIM_LOWER = -1500; // lower limit
-const int GIM_EN = 9;
-const int GIM_DR = 8;
-const int GIM_ST = 7;
+const int GIM_EN = 6;
+const int GIM_DR = 5;
+const int GIM_ST = 4;
 
 unsigned long ct;
 
