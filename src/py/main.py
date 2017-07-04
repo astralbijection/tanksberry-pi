@@ -57,6 +57,10 @@ class SocketHandler:
             elif cmd == 'laser':
                 devices.turret_uc.set_laser(ctrl)
                 log.debug('laser input received: %s', ctrl)
+            
+            elif cmd == 'fire':
+                devices.turret_uc.fire()
+                log.debug('sent fire command')
     
         log.info('websocket closed')
 

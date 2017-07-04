@@ -32,7 +32,7 @@ class TurretMicrocontroller:
         Stop the gimbal where it is.
         """
         self.bus.write_byte(self.i2c_addr, ord('s'))
-
+    
     '''
     def fire(self, times, delay):
         """
@@ -41,7 +41,11 @@ class TurretMicrocontroller:
         """
         out_d = util.intbyte(int(delay*10000000))
         self.bus.write_i2c_block_data(self.i2c_addr, ord('t'), [times] + out_d)
-
+    '''
+    
+    def fire(self):
+        self.bus.write_byte(self.i2c_addr, ord('t'))
+        
     def stop_firing(self):
         self.bus.write_byte(self.i2c_addr, ord('q'))
 
