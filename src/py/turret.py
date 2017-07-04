@@ -51,6 +51,16 @@ class TurretMicrocontroller:
 
     def return_gun(self):
         self.bus.write_byte(self.i2c_addr, ord('r'))
+    '''
+
+    def fire(self):
+        self.bus.write_byte_data(self.i2c_addr, ord('t'))
+
+    def prime_gun(self):
+        self.bus.write_byte_data(self.i2c_addr, ord('p'))
+
+    def return_gun(self):
+        self.bus.write_byte_data(self.i2c_addr, ord('r'))
 
     def disable_motor(self, motor):
         self.bus.write_byte_data(self.i2c_addr, ord('d'), motor)
