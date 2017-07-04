@@ -164,6 +164,10 @@ $(function() {
 	}).mouseup(function(event) {
 		clearInterval(laserInterval);
 	});
+	
+	$('#fire').click(function(event) {
+		socket.send('["fire", {}]')
+	});
 
 	// Initialize socket
 	socket = new WebSocket('ws://' + window.location.host + '/socket');
