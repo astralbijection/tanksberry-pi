@@ -11,6 +11,11 @@ The PIE-4000 is an attempt to make a remotely-operated tank that can shoot and s
 - [Pi Blaster](https://github.com/sarfata/pi-blaster) drives the motors
 - [MJPG Streamer](https://github.com/jacksonliam/mjpg-streamer) controls the cameras
 
+## CAD Models
+
+- [Firing mechanism](https://a360.co/2V8koB2)
+- [File containing: circuit mounting plates, turret mount, and jack for testing treads](https://a360.co/30BIuWb)
+
 ## Architecture
 The user interacts directly with the Raspberry Pi. The webpage provided decodes the user input into left and right motor speeds, turret angles, laser levels, and gun firing. The Pi has direct control over the cameras, drive, and yaw gimbal stepper. It sends commands over I<sup>2</sup>C to the Arduino, which controls the firing, pitch gimbal stepper, and laser pointer.
 
